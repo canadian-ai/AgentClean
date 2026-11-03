@@ -1,0 +1,61 @@
+
+/* AgentClean uses the same design tokens and sharp-corner interaction primitives
+   as canadian-ai/brand-components. Intentionally minimal like Favicon Studio. */
+:root {color-scheme:light}
+*,*:before,*:after{border-radius:0!important}
+body{background:var(--background)!important;color:var(--foreground)!important;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+a{color:inherit}
+.wrap{max-width:1080px;padding:0 24px}
+.top{height:64px;border-bottom:1px solid var(--border)}
+.brand{font-size:15px;letter-spacing:-.25px;gap:9px}
+.brand img{width:30px;height:30px;object-fit:contain}
+.brand .logo{display:none}
+.by,.toplinks{color:var(--muted-foreground)}
+.toplinks a:hover{color:var(--cai-color-text-action)}
+.hero{padding:72px 0 35px;text-align:left;max-width:780px;margin:0 auto}
+.eyebrow{color:var(--cai-color-text-secondary);font-weight:600;letter-spacing:0;text-transform:none;font-size:13px}
+.hero h1{font-size:clamp(35px,5.5vw,58px);line-height:1.13;margin:12px 0 14px;letter-spacing:-2px;max-width:820px;color:var(--cai-color-text-headings)}
+.hero h1 span{color:var(--cai-color-text-headings)}
+.hero p{margin:0;color:var(--muted-foreground);font-size:15px;line-height:1.6;max-width:630px}
+.wizard{max-width:780px;margin:8px auto 50px;background:var(--background);border:1px solid var(--border);box-shadow:none;overflow:visible}
+.steps{padding:20px 25px;border-bottom:1px solid var(--border);gap:18px}
+.step{color:var(--cai-color-text-secondary);font-size:13px}
+.step .num{border-color:var(--cai-color-border-neutral-medium);background:var(--background);color:var(--muted-foreground);height:26px;width:26px}
+.step.active,.step.done{color:var(--cai-color-text-headings)}
+.step.active .num{background:var(--cai-color-button-primary-bg);border-color:var(--cai-color-button-primary-bg);color:var(--cai-color-button-primary-fg)}
+.step.done .num{border-color:var(--cai-color-border-primary);color:var(--cai-color-text-action)}
+.body{padding:31px 32px}
+.body h2{font-size:21px;letter-spacing:-.4px;color:var(--cai-color-text-headings)}
+.sub{color:var(--muted-foreground);font-size:14px;margin-bottom:22px}
+.field label{color:var(--cai-color-text-body);font-weight:600}
+input[type=text],input[type=password]{background:var(--background);border:1px solid var(--cai-color-border-neutral-medium);color:var(--cai-color-text-body);height:42px;padding:9px 12px;box-shadow:none;font-size:14px}
+input::placeholder{color:var(--cai-color-text-secondary)}
+input:focus{border-color:var(--cai-color-border-focus);box-shadow:0 0 0 2px rgba(15,123,78,.15)}
+.help{color:var(--muted-foreground)}
+.notice{background:var(--cai-color-surface-container-low);color:var(--cai-color-text-secondary);border:1px solid var(--border);padding:13px 15px}
+.notice strong{color:var(--cai-color-text-body)}
+.btn{border:1px solid var(--cai-color-button-outline-border);background:var(--cai-color-button-outline-bg);color:var(--cai-color-button-outline-fg);height:36px;display:inline-flex;align-items:center;justify-content:center;padding:0 16px;font-size:13px;font-weight:600;transition:background-color .15s,border-color .15s,color .15s}
+.btn:hover:not(:disabled){filter:none;background:var(--cai-color-button-outline-hover)}
+.btn:focus-visible{outline:3px solid rgba(15,123,78,.25);outline-offset:1px}
+.btn.primary{background:var(--cai-color-button-primary-bg);border-color:var(--cai-color-button-primary-bg);color:var(--cai-color-button-primary-fg)}
+.btn.primary:hover:not(:disabled){background:var(--cai-color-button-primary-hover);border-color:var(--cai-color-button-primary-hover);color:#fff}
+.foot{border-top:1px solid var(--border);margin-top:26px;padding-top:20px}
+.options{gap:10px}
+.option{background:var(--background);border:1px solid var(--border);padding:14px}
+.option:has(input:checked){border-color:var(--cai-color-border-primary);background:var(--cai-color-surface-primary-weakest)}
+.option input,.inlinecheck input,.commit input{accent-color:var(--cai-color-surface-primary)}
+.option strong,.commit-title{color:var(--cai-color-text-body)}
+.option small,.meta,.muted{color:var(--muted-foreground)}
+.stat{background:var(--cai-color-surface-container-low);border-color:var(--border);padding:15px}
+.stat b{color:var(--cai-color-text-headings)}
+.stat span{color:var(--muted-foreground)}
+.commit{border-color:var(--border)}
+.pill{border-color:var(--cai-color-border-primary-weak);background:var(--cai-color-surface-primary-weakest);color:var(--cai-color-text-action)}
+.code{background:var(--cai-color-surface-container-low);border:1px solid var(--border);color:var(--cai-color-text-body)}
+.warning{background:#fff9eb;color:#6b4c19;border:1px solid #ddc996}
+.error{background:#fff1f1;color:#9b2222;border:1px solid #dba1a1}
+.success{background:var(--cai-color-surface-success-weak);border-color:var(--cai-color-border-primary);color:var(--cai-color-text-body)}
+.footer{color:var(--muted-foreground);padding-bottom:35px}
+.footer a{color:var(--cai-color-text-action)}
+@media(min-width:800px){.hero{margin-left:calc((100% - 780px)/2)}}
+@media(max-width:600px){.wrap{padding:0 16px}.top{height:58px}.hero{padding:48px 0 25px}.hero h1{font-size:37px;letter-spacing:-1.5px}.steps{padding:16px 12px;gap:4px}.step{font-size:11px}.body{padding:22px 18px}.wizard{margin-bottom:35px}.statgrid{grid-template-columns:repeat(3,1fr)}.stat{padding:10px 7px}.stat b{font-size:21px}.stat span{font-size:10px}.foot{gap:10px}}
