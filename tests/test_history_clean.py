@@ -86,7 +86,7 @@ class HistoryIntegrationTests(unittest.TestCase):
             self.assertNotEqual(before["head"], after["head"])
             authors = self.run_git("log", "--format=%an <%ae>", "origin/master", cwd=work)
             self.assertTrue(all(a == "Original Author <human@example.test>" for a in authors.splitlines()))
-            backups = self.run_git("for-each-ref", "--format=%(refname)", "refs/heads/agentclean-backup-", cwd=src)
+            backups = self.run_git("for-each-ref", "--format=%(refname)", "refs/heads/agentclean-backup-*", cwd=src)
             self.assertTrue(backups)
 
 
