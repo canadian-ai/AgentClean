@@ -65,10 +65,11 @@ def contributor_category(name, email):
 def contributor_audit(repo, branch):
     """Report actual Git author/committer identities, separate from trailers.
 
-    This is a Git-history approximation, not an exact GitHub Contributors API
-    count (which also uses branch, account mapping, and UI caching).
+    It applies Git .mailmap aliases to consolidate equivalent human identities.
+    Bot authors are auto-classified, not credited to a human. This is a
+    Git-history approximation, not an exact GitHub Contributors API count.
     """
-    raw = git("log", "--format=%an%x00%ae%x00%cn%x00%ce%x00%x1e", branch, cwd=repo)
+    raw = git("log", "--use-mailmap", "--format=%aN%x00%aE%x00%cN%x00%cE%x00%x1e", branch, cwd=repo)
     authors = {}
     committers = {}
     for record in raw.split(b"\x1e"):
@@ -100,8 +101,11 @@ def print_contributor_check(audit):
         print(f"  {role}: {len(audit[role])} identities; {len(bots)} automation/AI identities")
         for item in bots:
             print(f"    [{item['category']}] {item['name']} <{item['email']}>: {item['commits']} commits")
+    humans = [x for x in audit["authors"] if x["category"] == "human"]
+    print(f"  Human identities (mailmap-normalized): {len(humans)}")
+    print("  Automated author identities are classified without manual approval.")
     if any(x["category"] != "human" for x in audit["authors"]):
-        print("  CONTRIBUTOR CHECK: INCOMPLETE (message cleanup does not change actual authors)")
+        print("  CONTRIBUTOR CHECK: INCOMPLETE (GitHub may still display bot authors)")
     else:
         print("  CONTRIBUTOR CHECK: PASS (no recognized automated Git authors)")
 
