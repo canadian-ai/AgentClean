@@ -81,10 +81,20 @@ def rewrite(source, branch, push=False):
             "if len(filtered) != len(lines):\n"
             "    commit.message = re.sub(rb'\\n{3,}', b'\\n\\n', b'\\n'.join(filtered)).rstrip(b'\\n') + b'\\n'\n"
         )
-        subprocess.run(["git", "filter-repo", "--force", "--refs", remote_ref,
-                        "--commit-callback", callback], cwd=repo, check=True)
+        # Rewrite the checked-out local branch, not the remote-tracking ref.
+        # Disabling pruning is essential: an attribution-only edit must not
+        # change the number of commits or the merge topology.
+        subprocess.run(
+            ["git", "filter-repo", "--force", "--refs", "refs/heads/" + branch,
+             "--prune-empty", "never", "--prune-degenerate", "never",
+             "--replace-refs", "delete-no-add",
+             "--preserve-commit-encoding", "--commit-callback", callback],
+            cwd=repo, check=True,
+        )
         # filter-repo operates on a local branch; don't assume HEAD moved.
         after = summarize(repo, branch)
+        if after["head"] == old:
+            raise RuntimeError("Filter did not update the selected branch; no push")
         for invariant in ("tree", "commits", "merges"):
             if before[invariant] != after[invariant]:
                 raise RuntimeError(f"History invariant {invariant} changed; no push")
@@ -98,9 +108,11 @@ def rewrite(source, branch, push=False):
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         backup = f"refs/heads/agentclean-backup-{stamp}"
         # A backup exists on the remote before the force-with-lease update.
-        git("push", "origin", f"{old}:{backup}", cwd=repo, capture=False)
+        # The source clone is local and may have a stale origin after the filter.
+        # Push explicitly to the source URL; never reuse a removed remote.
+        git("push", source, f"{old}:{backup}", cwd=repo, capture=False)
         git("push", f"--force-with-lease={remote_ref}:{old}",
-            "origin", f"{after['head']}:{remote_ref}", cwd=repo, capture=False)
+            source, f"{after['head']}:{remote_ref}", cwd=repo, capture=False)
         print(f"Published rewritten {branch}. Remote backup: {backup}")
 
 
