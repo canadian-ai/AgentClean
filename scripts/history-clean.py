@@ -50,7 +50,7 @@ def git(*args, cwd=None, capture=True):
 # Classify only recognized automation identities; never infer that a human
 # author is an agent just because they used AI-assisted development.
 AI_IDENTITY = re.compile(r"(?:claude|codex|codesmith|cursor|gemini|opencode(?:-agent)?)", re.I)
-BOT_IDENTITY = re.compile(r"(?:\\[bot\\]|github-actions|dependabot|renovate)", re.I)
+BOT_IDENTITY = re.compile(r"(?:\[bot\]|github-actions|dependabot|renovate)", re.I)
 
 
 def contributor_category(name, email):
@@ -71,8 +71,8 @@ def contributor_audit(repo, branch):
     raw = git("log", "--format=%an%x00%ae%x00%cn%x00%ce%x00%x1e", branch, cwd=repo)
     authors = {}
     committers = {}
-    for record in raw.split(b"\\x1e"):
-        fields = record.strip(b"\\n").split(b"\\x00")
+    for record in raw.split(b"\x1e"):
+        fields = record.strip(b"\n").split(b"\x00")
         if len(fields) < 4:
             continue
         author = tuple(v.decode("utf-8", "replace") for v in fields[:2])
