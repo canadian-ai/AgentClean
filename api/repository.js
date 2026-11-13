@@ -13,6 +13,8 @@ const signatures = {
     /^\s*co-authored-by:\s*cursor\b.*$/i,
     /^\s*(?:generated|assisted) (?:with|by) cursor\b.*$/i
   ],
+  codesmith: [/^\s*co-authored-by:\s*codesmith\b.*$/i],
+  opencode: [/^\s*co-authored-by:\s*opencode(?:-agent)?(?:\[bot\])?\b.*$/i],
   gemini: [
     /^\s*co-authored-by:\s*(?:google\s+)?gemini\b.*$/i,
     /^\s*(?:generated|assisted) (?:with|by) gemini(?: cli)?\b.*$/i
