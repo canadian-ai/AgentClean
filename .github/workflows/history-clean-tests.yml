@@ -5,6 +5,9 @@ on:
     paths:
       - 'scripts/history-clean.py'
       - 'tests/test_history_clean.py'
+      - 'tests/contributor-check.test.js'
+      - 'api/repository.js'
+      - 'index.html'
       - '.github/workflows/history-clean-tests.yml'
   pull_request:
     paths:
@@ -22,6 +25,8 @@ jobs:
           python-version: '3.12'
       - name: Install git-filter-repo
         run: python -m pip install git-filter-repo
+      - name: Test contributor classification API
+        run: node --test tests/contributor-check.test.js
       - name: Compile CLI
         run: python -m py_compile scripts/history-clean.py
       - name: Test attribution cleanup
