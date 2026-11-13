@@ -46,6 +46,66 @@ def git(*args, cwd=None, capture=True):
     ).stdout
 
 
+
+# Classify only recognized automation identities; never infer that a human
+# author is an agent just because they used AI-assisted development.
+AI_IDENTITY = re.compile(r"(?:claude|codex|codesmith|cursor|gemini|opencode(?:-agent)?)", re.I)
+BOT_IDENTITY = re.compile(r"(?:\\[bot\\]|github-actions|dependabot|renovate)", re.I)
+
+
+def contributor_category(name, email):
+    identity = name + " " + email
+    if AI_IDENTITY.search(identity):
+        return "ai-agent"
+    if BOT_IDENTITY.search(identity):
+        return "automation"
+    return "human"
+
+
+def contributor_audit(repo, branch):
+    """Report actual Git author/committer identities, separate from trailers.
+
+    This is a Git-history approximation, not an exact GitHub Contributors API
+    count (which also uses branch, account mapping, and UI caching).
+    """
+    raw = git("log", "--format=%an%x00%ae%x00%cn%x00%ce%x00%x1e", branch, cwd=repo)
+    authors = {}
+    committers = {}
+    for record in raw.split(b"\\x1e"):
+        fields = record.strip(b"\\n").split(b"\\x00")
+        if len(fields) < 4:
+            continue
+        author = tuple(v.decode("utf-8", "replace") for v in fields[:2])
+        committer = tuple(v.decode("utf-8", "replace") for v in fields[2:4])
+        authors[author] = authors.get(author, 0) + 1
+        committers[committer] = committers.get(committer, 0) + 1
+
+    def rows(identities):
+        return sorted(
+            (
+                {"name": name, "email": email, "commits": count,
+                 "category": contributor_category(name, email)}
+                for (name, email), count in identities.items()
+            ),
+            key=lambda row: (-row["commits"], row["name"], row["email"]),
+        )
+
+    return {"authors": rows(authors), "committers": rows(committers)}
+
+
+def print_contributor_check(audit):
+    print("Contributor identity check (Git history, not GitHub UI):")
+    for role in ("authors", "committers"):
+        bots = [x for x in audit[role] if x["category"] != "human"]
+        print(f"  {role}: {len(audit[role])} identities; {len(bots)} automation/AI identities")
+        for item in bots:
+            print(f"    [{item['category']}] {item['name']} <{item['email']}>: {item['commits']} commits")
+    if any(x["category"] != "human" for x in audit["authors"]):
+        print("  CONTRIBUTOR CHECK: INCOMPLETE (message cleanup does not change actual authors)")
+    else:
+        print("  CONTRIBUTOR CHECK: PASS (no recognized automated Git authors)")
+
+
 def summarize(repo, branch):
     head = git("rev-parse", branch, cwd=repo).strip().decode()
     tree = git("rev-parse", branch + "^{tree}", cwd=repo).strip().decode()
@@ -66,6 +126,8 @@ def rewrite(source, branch, push=False):
         git("clone", "--no-tags", "--single-branch", "--branch", branch,
             source, str(repo), capture=False)
         before = summarize(repo, "HEAD")
+        original_audit = contributor_audit(repo, "HEAD")
+        print_contributor_check(original_audit)
         if before["matches"] == 0:
             print("No matching trailers; no rewrite needed.")
             return
@@ -94,6 +156,10 @@ def rewrite(source, branch, push=False):
         )
         # filter-repo operates on a local branch; don't assume HEAD moved.
         after = summarize(repo, branch)
+        updated_audit = contributor_audit(repo, branch)
+        if original_audit != updated_audit:
+            raise RuntimeError("Author or committer identity changed; no push")
+        print_contributor_check(updated_audit)
         if after["head"] == old:
             raise RuntimeError("Filter did not update the selected branch; no push")
         for invariant in ("tree", "commits", "merges"):
@@ -134,6 +200,7 @@ def main():
             stats = summarize(directory, "HEAD")
             print(f"{stats['commits']} commits; {stats['merges']} merge commits; "
                   f"{stats['matches']} commits with removable attribution.")
+            print_contributor_check(contributor_audit(directory, "HEAD"))
             print("Read-only preview. To rewrite locally, use --apply.")
         return
     rewrite(args.repository, args.branch, args.push)
