@@ -47,6 +47,34 @@ class CleanMessageTests(unittest.TestCase):
         self.assertEqual(module.clean_message(msg), msg)
 
 
+    def test_contributor_classification(self):
+        self.assertEqual(module.contributor_category("Claude", "noreply@anthropic.com"), "ai-agent")
+        self.assertEqual(module.contributor_category("github-actions[bot]", "bot@users.noreply.github.com"), "automation")
+        self.assertEqual(module.contributor_category("Ola", "ola@example.test"), "human")
+        self.assertEqual(module.contributor_category("tyrellshawn", "human@example.test"), "human")
+
+    def test_mailmap_collapses_human_aliases(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-b", "master", str(repo)], check=True, capture_output=True)
+            subprocess.run(["git", "config", "user.name", "tyrellshawn"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "tyrellshawn@users.noreply.github.com"], cwd=repo, check=True)
+            (repo / ".mailmap").write_text(
+                "tyrellshawn <tyrellshawn@users.noreply.github.com> Ola <ola@example.test>\\n"
+            )
+            subprocess.run(["git", "add", "."], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-m", "first"], cwd=repo, check=True, capture_output=True)
+            (repo / "second.txt").write_text("second")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True)
+            subprocess.run(["git", "-c", "user.name=Ola", "-c", "user.email=ola@example.test",
+                            "commit", "-m", "second"], cwd=repo, check=True, capture_output=True)
+            audit = module.contributor_audit(repo, "HEAD")
+            humans = [r for r in audit["authors"] if r["category"] == "human"]
+            self.assertEqual(len(humans), 1)
+            self.assertEqual(humans[0]["name"], "tyrellshawn")
+            self.assertEqual(humans[0]["commits"], 2)
+
+
 @unittest.skipUnless(shutil.which("git-filter-repo"), "requires git-filter-repo")
 class HistoryIntegrationTests(unittest.TestCase):
     """Exercise the actual filter engine on a repository with a merge commit."""
