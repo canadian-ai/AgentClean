@@ -61,6 +61,34 @@ async function github(path, token, options = {}) {
   if (!r.ok) fail(data.message || "GitHub request failed", r.status);
   return data;
 }
+// Classifications are advisory; preserve actual Git authorship. Automation
+// identities can be preapproved for filtering without rewriting their commits.
+function contributorCategory(name = "", email = "") {
+  const identity = name + " " + email;
+  if (/(?:claude|codex|codesmith|cursor|gemini|opencode(?:-agent)?)/i.test(identity)) return "ai-agent";
+  if (/(?:\\[bot\\]|github-actions|dependabot|renovate)/i.test(identity)) return "automation";
+  return "human";
+}
+function contributorCheck(commits, partial) {
+  const authors = new Map();
+  const committers = new Map();
+  for (const item of commits) {
+    for (const [records, data] of [[authors, item.commit.author], [committers, item.commit.committer]]) {
+      const name = data?.name || "Unknown", email = data?.email || "";
+      const key = JSON.stringify([name, email]);
+      if (!records.has(key)) records.set(key, { name, email, category: contributorCategory(name, email), commits: 0 });
+      records.get(key).commits++;
+    }
+  }
+  const sorted = map => [...map.values()].sort((a,b) => b.commits-a.commits);
+  const authorRows = sorted(authors), committerRows = sorted(committers);
+  return {
+    authors: authorRows, committers: committerRows, partial,
+    autoApproved: authorRows.filter(a => a.category !== "human"),
+    humanCount: authorRows.filter(a => a.category === "human").length,
+    hasAutomatedAuthors: authorRows.some(a => a.category !== "human"),
+  };
+}
 async function scan(body, token) {
   const {owner,repo,branch} = validate(body);
   const prefix = "/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo);
@@ -84,7 +112,7 @@ async function scan(body, token) {
       signed: c.commit.verification?.verified || false
     };
   });
-  return {repo:owner+"/"+repo,branch,head,protected:branchInfo.protected,tooLarge,commits:rows,available:rows.filter(r=>Object.keys(r.removed).length).length, scanned:rows.length};
+  return {repo:owner+"/"+repo,branch,head,protected:branchInfo.protected,tooLarge,commits:rows,available:rows.filter(r=>Object.keys(r.removed).length).length, scanned:rows.length,contributorCheck:contributorCheck(commits,tooLarge)};
 }
 async function apply(body, token) {
   if (!token) fail("A GitHub fine-grained token is required for cleanup", 401);
