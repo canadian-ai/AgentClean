@@ -23,6 +23,7 @@ TRAILERS = (
     rb"^[ \t]*co-authored-by:[ \t]*cursor\b.*$",
     rb"^[ \t]*(?:generated|assisted) (?:with|by) cursor\b.*$",
     rb"^[ \t]*co-authored-by:[ \t]*(?:google[ \t]+)?gemini\b.*$",
+    rb"^[ \t]*co-authored-by:[ \t]*(?:codesmith|opencode(?:-agent)?(?:\[bot\])?)(?=[ \t]|$).*$",
     rb"^[ \t]*(?:generated|assisted) (?:with|by) gemini(?: cli)?\b.*$",
 )
 PATTERNS = tuple(re.compile(pattern, re.IGNORECASE) for pattern in TRAILERS)

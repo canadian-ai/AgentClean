@@ -36,6 +36,8 @@ class CleanMessageTests(unittest.TestCase):
             b"Co-authored-by: OpenAI Codex <bot@example.test>",
             b"Co-authored-by: Cursor <bot@example.test>",
             b"Co-authored-by: Google Gemini <bot@example.test>",
+            b"Co-authored-by: Codesmith <codesmith-bot@users.noreply.github.com>",
+            b"Co-authored-by: opencode-agent[bot] <opencode-agent[bot]@users.noreply.github.com>",
         ):
             with self.subTest(trailer=trailer):
                 self.assertEqual(module.clean_message(b"fix: something\n\n" + trailer + b"\n"), b"fix: something\n")
